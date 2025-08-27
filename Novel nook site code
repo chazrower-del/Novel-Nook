@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novel Nook - Classroom Book Reviews</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-pacifico {
+            font-family: 'Pacifico', cursive;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #a78bfa; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+        
+        /* Modal Animation */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
+        .modal-leave-active { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
+
+        /* Gradient background */
+        .gradient-bg {
+            background-color: #f3e8ff;
+            background-image: radial-gradient(at 47% 33%, hsl(218.00, 100%, 95%) 0, transparent 59%), radial-gradient(at 82% 65%, hsl(278.00, 100%, 92%) 0, transparent 55%);
+        }
+        /* Custom focus ring for better visibility */
+        .custom-focus-ring:focus {
+            ring-offset-color: #f3e8ff;
+            --tw-ring-color: #8b5cf6;
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        }
+    </style>
+</head>
+<body class="gradient-bg text-gray-800">
+
+    <!-- Main Container -->
+    <div id="app" class="container mx-auto p-4 md:p-8">
+
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-6xl md:text-7xl font-pacifico text-violet-600">Novel Nook</h1>
+            <p class="text-lg text-gray-700 mt-2">Your Classroom's Guide to Great Reads</p>
+        </header>
+
+        <!-- Action Bar -->
+        <div class="flex justify-center mb-8">
+            <button id="addBookBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition-all duration-300 transform hover:scale-105">
+                + Add a Book Review
+            </button>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <!-- Search Input -->
+            <div class="md:col-span-1">
+                <input type="text" id="searchInput" placeholder="Search by title or author..." class="w-full px-4 py-2 border border-gray-300 rounded-lg custom-focus-ring focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300">
+            </div>
+            <!-- Filter and Sort Dropdowns -->
+            <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <select id="genreFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white custom-focus-ring focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300">
+                    <option value="all">All Genres</option>
+                    <option value="Fiction">Fiction</option>
+                    <option value="Science Fiction">Science Fiction</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Mystery">Mystery</option>
+                    <option value="Historical Fiction">Historical Fiction</option>
+                    <option value="Biography">Biography</option>
+                    <option value="Non-Fiction">Non-Fiction</option>
+                </select>
+                <select id="sortFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white custom-focus-ring focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300">
+                    <option value="recent">Sort by Most Recent</option>
+                    <option value="rating">Sort by Highest Rated</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div id="loader" class="text-center py-10"><svg class="animate-spin h-8 w-8 text-violet-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2 text-gray-600">Loading books...</p></div>
+        <div id="noBooksMessage" class="hidden text-center py-10 bg-white/70 backdrop-blur-sm rounded-lg shadow-md"><h3 class="text-2xl font-semibold text-gray-700">No Reviews Yet!</h3><p class="text-gray-500 mt-2">Be the first to add a book review.</p></div>
+        <div id="noResultsMessage" class="hidden text-center py-10 bg-white/70 backdrop-blur-sm rounded-lg shadow-md"><h3 class="text-2xl font-semibold text-gray-700">No Books Found</h3><p class="text-gray-500 mt-2">Try adjusting your search or filters.</p></div>
+
+        <!-- Book Grid -->
+        <div id="bookGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8"></div>
+    </div>
+
+    <!-- Add/Edit Book Modal -->
+    <div id="bookModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden modal-enter">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto">
+            <form id="bookForm" class="p-8">
+                <h2 id="modalTitle" class="text-3xl font-bold mb-6 text-gray-800 text-center">Add a New Book Review</h2>
+                <div class="space-y-4">
+                    <!-- Personal Info -->
+                    <div><label for="studentName" class="block text-sm font-medium text-gray-700">Your Name</label><input type="text" id="studentName" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
+                    <div><label for="studentEmail" class="block text-sm font-medium text-gray-700">Your Email</label><input type="email" id="studentEmail" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
+                    <hr class="my-4 border-gray-200">
+                    <!-- Book Info -->
+                    <div><label for="title" class="block text-sm font-medium text-gray-700">Book Title</label><input type="text" id="title" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
+                    <div><label for="author" class="block text-sm font-medium text-gray-700">Author</label><input type="text" id="author" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
+                    <!-- Genre Tags -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Genres (Select at least one)</label>
+                        <div id="genre-tags" class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <!-- Checkboxes will be inserted here -->
+                        </div>
+                    </div>
+                    <div><label for="coverArtUrl" class="block text-sm font-medium text-gray-700">Cover Art URL</label><input type="url" id="coverArtUrl" required placeholder="https://example.com/image.jpg" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
+                    <div><label for="summary" class="block text-sm font-medium text-gray-700">Brief Summary</label><textarea id="summary" rows="3" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Rating</label><div id="starRating" class="flex items-center mt-2 space-x-1"></div><input type="hidden" id="rating" value="0"></div>
+                    <div><label for="review" class="block text-sm font-medium text-gray-700">Your Review</label><textarea id="review" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
+                </div>
+                <div class="flex justify-end mt-8 space-x-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Comments Modal -->
+    <div id="commentsModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden modal-enter">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center"><h2 id="commentsModalTitle" class="text-2xl font-bold text-gray-800">Comments</h2><button id="closeCommentsBtn" class="text-gray-400 hover:text-gray-600"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+            <div id="commentsList" class="p-6 flex-grow overflow-y-auto space-y-4"></div>
+            <div class="p-6 border-t bg-gray-50"><form id="commentForm"><label for="commentText" class="block text-sm font-medium text-gray-700 mb-2">Leave a Comment</label><div class="flex space-x-3"><input type="text" id="commenterName" placeholder="Your Name" required class="block w-1/3 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"><input type="text" id="commentText" placeholder="Write your comment..." required class="block w-2/3 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"><button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Post</button></div></form></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, doc, deleteDoc, updateDoc, increment, arrayUnion, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const ADMIN_USER_ID = "REPLACE_WITH_YOUR_FIREBASE_USER_ID";
+
+        let app, auth, db, userId;
+        let booksCollectionRef;
+        let commentsUnsubscribe = null;
+        let allBooks = []; // Holds all books from Firestore
+        
+        const GENRES = ["Fiction", "Science Fiction", "Fantasy", "Mystery", "Historical Fiction", "Biography", "Non-Fiction"];
+
+        // --- UI ELEMENTS ---
+        const bookGrid = document.getElementById('bookGrid');
+        const loader = document.getElementById('loader');
+        const noBooksMessage = document.getElementById('noBooksMessage');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const searchInput = document.getElementById('searchInput');
+        const genreFilter = document.getElementById('genreFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("User is signed in with UID:", userId);
+                        const collectionPath = `/artifacts/${appId}/public/data/books`;
+                        booksCollectionRef = collection(db, collectionPath);
+                        setupRealtimeListener();
+                    } else {
+                        authenticateUser();
+                    }
+                });
+            } catch (error) { console.error("Firebase initialization failed:", error); loader.innerText = "Failed to connect."; }
+        }
+
+        async function authenticateUser() {
+            try {
+                if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
+                else await signInAnonymously(auth);
+            } catch (error) { console.error("Authentication failed:", error); }
+        }
+        
+        function setupRealtimeListener() {
+            const q = query(booksCollectionRef);
+            onSnapshot(q, async (snapshot) => {
+                loader.classList.add('hidden');
+                let booksData = [];
+                snapshot.forEach(doc => booksData.push({ id: doc.id, ...doc.data() }));
+                
+                for (const book of booksData) {
+                    const commentsColRef = collection(db, `/artifacts/${appId}/public/data/books/${book.id}/comments`);
+                    const commentsSnapshot = await getDocs(commentsColRef);
+                    book.commentCount = commentsSnapshot.size;
+                }
+                allBooks = booksData;
+                applyFiltersAndRender();
+            }, (error) => { console.error("Error fetching books:", error); });
+        }
+
+        function applyFiltersAndRender() {
+            let filteredBooks = [...allBooks];
+            const searchTerm = searchInput.value.toLowerCase();
+            const genre = genreFilter.value;
+            const sort = sortFilter.value;
+
+            // Search filter
+            if (searchTerm) {
+                filteredBooks = filteredBooks.filter(book => 
+                    book.title.toLowerCase().includes(searchTerm) || 
+                    book.author.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Genre filter
+            if (genre !== 'all') {
+                filteredBooks = filteredBooks.filter(book => book.tags && book.tags.includes(genre));
+            }
+
+            // Sorting
+            if (sort === 'rating') {
+                filteredBooks.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else { // 'recent'
+                filteredBooks.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+            }
+
+            renderBooks(filteredBooks);
+        }
+
+        function renderBooks(books) {
+            bookGrid.innerHTML = '';
+            noBooksMessage.classList.toggle('hidden', allBooks.length > 0);
+            noResultsMessage.classList.toggle('hidden', books.length > 0 || allBooks.length === 0);
+            books.forEach(book => bookGrid.appendChild(createBookCard(book)));
+        }
+
+        function createBookCard(book) {
+            const card = document.createElement('div');
+            card.className = 'bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 relative';
+            card.dataset.bookId = book.id;
+            
+            const ratingStars = generateStars(book.rating, 'h-5 w-5');
+            const placeholderUrl = `https://placehold.co/400x600/e2e8f0/64748b?text=${encodeURIComponent(book.title)}`;
+            const isAdmin = userId === ADMIN_USER_ID;
+            const hasUpvoted = book.upvotedBy?.includes(userId);
+            const tagsHTML = (book.tags || []).map(tag => `<span class="bg-violet-200 text-violet-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${tag}</span>`).join('');
+
+            card.innerHTML = `
+                ${isAdmin ? `<button class="delete-btn absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 shadow-md hover:bg-red-600 z-10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>` : ''}
+                <img src="${book.coverArtUrl}" onerror="this.onerror=null;this.src='${placeholderUrl}';" alt="Cover of ${book.title}" class="w-full h-56 object-cover">
+                <div class="p-5 flex flex-col flex-grow">
+                    <div class="mb-2">${tagsHTML}</div>
+                    <h3 class="text-xl font-bold text-gray-900">${book.title}</h3>
+                    <p class="text-sm text-gray-600 mb-2">by ${book.author}</p>
+                    <div class="flex items-center mb-4">${ratingStars}</div>
+                    <p class="text-gray-700 text-sm mb-4 flex-grow"><strong class="font-semibold">Summary:</strong> ${book.summary}</p>
+                    <div class="bg-gray-100 p-3 rounded-md mt-auto">
+                        <p class="text-gray-800 text-sm italic">"${book.review}"</p>
+                        <p class="text-xs text-gray-500 text-right mt-2">- ${book.studentName}</p>
+                    </div>
+                </div>
+                <div class="p-3 bg-gray-50 border-t flex justify-between items-center">
+                    <button class="upvote-btn flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition-colors ${hasUpvoted ? 'text-indigo-600 font-bold' : ''}" ${hasUpvoted ? 'disabled' : ''}>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.085a2 2 0 00-1.736.93L5.5 8m7 2H5" /></svg>
+                        <span>${book.upvotes || 0}</span>
+                    </button>
+                    <button class="comment-btn flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition-colors">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        <span>${book.commentCount || 0}</span>
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        // --- MODAL & FORM LOGIC ---
+        const bookModal = document.getElementById('bookModal');
+        const bookForm = document.getElementById('bookForm');
+        const starRatingContainer = document.getElementById('starRating');
+        
+        function openModal(modal) { modal.classList.remove('hidden'); setTimeout(() => modal.classList.add('modal-enter-active'), 10); }
+        function closeModal(modal) { modal.classList.remove('modal-enter-active'); modal.classList.add('modal-leave-active'); setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('modal-leave-active'); }, 200); }
+        
+        function populateGenreCheckboxes() {
+            const container = document.getElementById('genre-tags');
+            container.innerHTML = '';
+            GENRES.forEach(genre => {
+                container.innerHTML += `
+                    <label class="flex items-center space-x-2 text-sm">
+                        <input type="checkbox" name="genre" value="${genre}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                        <span>${genre}</span>
+                    </label>
+                `;
+            });
+        }
+
+        document.getElementById('addBookBtn').addEventListener('click', () => {
+            bookForm.reset();
+            document.getElementById('rating').value = '0';
+            populateGenreCheckboxes();
+            updateStars(0);
+            openModal(bookModal);
+        });
+        document.getElementById('cancelBtn').addEventListener('click', () => closeModal(bookModal));
+
+        // --- EVENT LISTENERS for filters, forms, etc. ---
+        searchInput.addEventListener('input', applyFiltersAndRender);
+        genreFilter.addEventListener('change', applyFiltersAndRender);
+        sortFilter.addEventListener('change', applyFiltersAndRender);
+        
+        bookForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selectedGenres = Array.from(bookForm.querySelectorAll('input[name="genre"]:checked')).map(el => el.value);
+            if (selectedGenres.length === 0) { alert("Please select at least one genre."); return; }
+            if (Number(document.getElementById('rating').value) === 0) { alert("Please select a star rating."); return; }
+
+            const newBook = {
+                title: document.getElementById('title').value, author: document.getElementById('author').value,
+                tags: selectedGenres, coverArtUrl: document.getElementById('coverArtUrl').value,
+                summary: document.getElementById('summary').value, review: document.getElementById('review').value,
+                rating: Number(document.getElementById('rating').value), studentName: document.getElementById('studentName').value,
+                studentEmail: document.getElementById('studentEmail').value, submittedBy: userId,
+                timestamp: serverTimestamp(), upvotes: 0, upvotedBy: []
+            };
+            try { await addDoc(booksCollectionRef, newBook); closeModal(bookModal); } 
+            catch (error) { console.error("Error adding document: ", error); }
+        });
+        
+        // --- All other functions (stars, comments, card clicks) are included below for completeness ---
+        function generateStars(rating, sizeClass = 'h-8 w-8') { let starsHTML = ''; for (let i = 1; i <= 5; i++) { starsHTML += `<svg class="${i <= rating ? 'text-yellow-400' : 'text-gray-300'} ${sizeClass}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`; } return starsHTML; }
+        function updateStars(rating) { const stars = starRatingContainer.querySelectorAll('button'); stars.forEach(star => { const value = parseInt(star.dataset.value); star.innerHTML = generateStars(value <= rating ? value : 0, 'h-8 w-8'); }); }
+        starRatingContainer.addEventListener('click', e => { const starButton = e.target.closest('button'); if (starButton?.dataset.value) { const ratingValue = parseInt(starButton.dataset.value); document.getElementById('rating').value = ratingValue; updateStars(ratingValue); } });
+        (function setupStarRatingInput() { starRatingContainer.innerHTML = ''; for (let i = 1; i <= 5; i++) { const star = document.createElement('button'); star.type = 'button'; star.dataset.value = i; star.innerHTML = generateStars(0, 'h-8 w-8'); star.classList.add('focus:outline-none', 'transition-transform', 'transform', 'hover:scale-110'); starRatingContainer.appendChild(star); } updateStars(0); })();
+        const commentsModal = document.getElementById('commentsModal'); let currentBookIdForComment = null;
+        document.getElementById('closeCommentsBtn').addEventListener('click', () => { closeModal(commentsModal); if (commentsUnsubscribe) commentsUnsubscribe(); });
+        document.getElementById('commentForm').addEventListener('submit', async (e) => { e.preventDefault(); const commentText = document.getElementById('commentText').value; const commenterName = document.getElementById('commenterName').value; if (!commentText || !commenterName || !currentBookIdForComment) return; const commentsColRef = collection(db, `/artifacts/${appId}/public/data/books/${currentBookIdForComment}/comments`); try { await addDoc(commentsColRef, { commentText, studentName: commenterName, userId, timestamp: serverTimestamp() }); document.getElementById('commentForm').reset(); } catch (error) { console.error("Error adding comment:", error); } });
+        async function openCommentsModal(bookId) { currentBookIdForComment = bookId; document.getElementById('commentsModalTitle').innerText = `Comments`; openModal(commentsModal); const commentsColRef = collection(db, `/artifacts/${appId}/public/data/books/${bookId}/comments`); const q = query(commentsColRef); if (commentsUnsubscribe) commentsUnsubscribe(); commentsUnsubscribe = onSnapshot(q, (snapshot) => { const commentsList = document.getElementById('commentsList'); commentsList.innerHTML = ''; if (snapshot.empty) { commentsList.innerHTML = `<p class="text-gray-500 text-center">No comments yet. Be the first!</p>`; return; } const comments = []; snapshot.forEach(doc => comments.push(doc.data())); comments.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0)); comments.forEach(comment => { const div = document.createElement('div'); div.className = 'bg-gray-100 p-3 rounded-lg'; div.innerHTML = `<p class="text-gray-800">${comment.commentText}</p><p class="text-xs text-gray-500 text-right mt-1">- ${comment.studentName}</p>`; commentsList.appendChild(div); }); }); }
+        bookGrid.addEventListener('click', async (e) => { const target = e.target; const card = target.closest('[data-book-id]'); if (!card) return; const bookId = card.dataset.bookId; const bookDocRef = doc(db, `/artifacts/${appId}/public/data/books/${bookId}`); if (target.closest('.delete-btn') && userId === ADMIN_USER_ID) { if (confirm('Are you sure you want to delete this review?')) { try { await deleteDoc(bookDocRef); } catch (error) { console.error("Error deleting document:", error); } } } else if (target.closest('.upvote-btn') && !target.closest('.upvote-btn').disabled) { try { await updateDoc(bookDocRef, { upvotes: increment(1), upvotedBy: arrayUnion(userId) }); } catch (error) { console.error("Error upvoting:", error); } } else if (target.closest('.comment-btn')) { openCommentsModal(bookId); } });
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', initializeFirebase);
+    </script>
+</body>
+</html>
